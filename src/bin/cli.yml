@@ -1,0 +1,36 @@
+name: kvs
+version: "0.1.0"
+author: triplewy <triplewy@gmail.com>
+about: PingCAP Project 1
+subcommands:
+    - get:
+        about: get a kv pair
+        version: "1.0"
+        author: triplewy <triplewy@gmail.com>
+        args:
+            - key:
+                help: Search for key
+                required: true
+                index: 1
+    - set:
+        about: set a kv pair
+        version: "1.0"
+        author: triplewy <triplewy@gmail.com>
+        args:
+            - key:
+                help: Key
+                required: true
+                index: 1
+            - value:
+                help: Value
+                required: true
+                index: 2
+    - rm:
+        about: rm a kv pair
+        version: "1.0"
+        author: triplewy <triplewy@gmail.com>
+        args:
+            - key:
+                help: Search for key
+                required: true
+                index: 1
