@@ -1,14 +1,14 @@
 name: kvs
 version: "0.1.0"
 author: triplewy <triplewy@gmail.com>
-about: PingCAP Project 1
+about: CLI for KvStore
 subcommands:
     - get:
         about: get a kv pair
         version: "1.0"
         author: triplewy <triplewy@gmail.com>
         args:
-            - key:
+            - KEY:
                 help: Search for key
                 required: true
                 index: 1
@@ -17,11 +17,11 @@ subcommands:
         version: "1.0"
         author: triplewy <triplewy@gmail.com>
         args:
-            - key:
+            - KEY:
                 help: Key
                 required: true
                 index: 1
-            - value:
+            - VALUE:
                 help: Value
                 required: true
                 index: 2
@@ -30,7 +30,7 @@ subcommands:
         version: "1.0"
         author: triplewy <triplewy@gmail.com>
         args:
-            - key:
+            - KEY:
                 help: Search for key
                 required: true
                 index: 1
