@@ -1,11 +1,12 @@
 //! In-memory kv store
 
 use crate::config::Config;
+use crate::engine::KvsEngine;
 use crate::error::KvStoreError;
 
 use serde::{Deserialize, Serialize};
 use std::collections::{HashMap, HashSet};
-use std::fs::{self, remove_file, rename, File, OpenOptions};
+use std::fs::{self, create_dir_all, remove_file, rename, File, OpenOptions};
 use std::io::{BufReader, BufWriter, Seek, SeekFrom, Write};
 use std::path::{Path, PathBuf};
 
@@ -43,34 +44,10 @@ pub struct KvStore {
     config: Config,
 }
 
-impl KvStore {
-    /// Open loads all log data inside the given path and assigns a new writer to write entries to
-    /// ```
-    /// use kvs::KvStore;
-    /// use std::env;
-    /// fn main() {
-    ///     let curr_dir = env::current_dir().unwrap();
-    ///     let store = KvStore::open(curr_dir.as_path()).expect("Failed to open KvStore");
-    /// }
-    pub fn open(path: &Path) -> Result<KvStore> {
-        let (map, immutable_ids, last_id) = load(path)?;
-        let log = get_log_path(&path.to_owned(), last_id);
-        let f = OpenOptions::new().append(true).create(true).open(log)?;
-        let mut writer = BufWriter::new(f);
-        writer.seek(SeekFrom::End(0))?;
-        Ok(KvStore {
-            map: map,
-            writer: writer,
-            path: path.to_owned(),
-            id: last_id,
-            immutable_ids: immutable_ids,
-            config: Config::default(),
-        })
-    }
-
+impl KvsEngine for KvStore {
     /// Writes a key, value pair to KvStore. Can potentially cause compaction which will block method until completed
     /// ```rust
-    /// # use kvs::{KvStore, Result};
+    /// # use kvs::{KvStore, Result, KvsEngine};
     /// # use std::env;
     /// # fn main() -> Result<()> {
     /// let curr_dir = env::current_dir().unwrap();
@@ -79,7 +56,7 @@ impl KvStore {
     /// # Ok(())
     /// # }
     /// ```
-    pub fn set(&mut self, key: String, value: String) -> Result<()> {
+    fn set(&mut self, key: String, value: String) -> Result<()> {
         let mut offset = self.writer.seek(SeekFrom::Current(0))?;
         // If current file is above filesize limit, create new log file
         if offset > self.config.filesize_limit {
@@ -119,7 +96,7 @@ impl KvStore {
 
     /// Reads a value for a key. If key is not found, will return Ok(None)
     /// ```rust
-    /// # use kvs::{KvStore, Result};
+    /// # use kvs::{KvStore, Result, KvsEngine};
     /// # use std::env;
     /// # fn main() -> Result<()> {
     /// let curr_dir = env::current_dir().unwrap();
@@ -130,7 +107,7 @@ impl KvStore {
     /// # Ok(())
     /// # }
     /// ```
-    pub fn get(&self, key: String) -> Result<Option<String>> {
+    fn get(&mut self, key: String) -> Result<Option<String>> {
         match self.map.get(&key) {
             Some(fp) => {
                 let f = File::open(&fp.path)?;
@@ -150,7 +127,7 @@ impl KvStore {
 
     /// Removes a key from the KvStore. Succeeds regardless if key exists in KvStore.
     /// ```rust
-    /// # use kvs::{KvStore, Result};
+    /// # use kvs::{KvStore, Result, KvsEngine};
     /// # use std::env;
     /// # fn main() -> Result<()> {
     /// let curr_dir = env::current_dir().unwrap();
@@ -161,7 +138,7 @@ impl KvStore {
     /// # Ok(())
     /// # }
     /// ```
-    pub fn remove(&mut self, key: String) -> Result<()> {
+    fn remove(&mut self, key: String) -> Result<()> {
         match self.map.get(&key) {
             Some(_) => {
                 let cmd = Command {
@@ -170,11 +147,40 @@ impl KvStore {
                     value: String::default(),
                 };
                 serde_json::to_writer(&mut self.writer, &cmd)?;
+                self.writer.flush()?;
                 self.map.remove(&key);
                 Ok(())
             }
             None => Err(KvStoreError::KeyNotFoundError {}),
         }
+    }
+}
+
+impl KvStore {
+    /// Open loads all log data inside the given path and assigns a new writer to write entries to
+    /// ```
+    /// use kvs::KvStore;
+    /// use std::env;
+    /// fn main() {
+    ///     let curr_dir = env::current_dir().unwrap();
+    ///     let store = KvStore::open(curr_dir.as_path()).expect("Failed to open KvStore");
+    /// }
+    pub fn open(path: &Path) -> Result<KvStore> {
+        let dir = path.join("logs");
+        create_dir_all(&dir)?;
+        let (map, immutable_ids, last_id) = load(&dir)?;
+        let log = get_log_path(&dir, last_id);
+        let f = OpenOptions::new().append(true).create(true).open(log)?;
+        let mut writer = BufWriter::new(f);
+        writer.seek(SeekFrom::End(0))?;
+        Ok(KvStore {
+            map: map,
+            writer: writer,
+            path: dir,
+            id: last_id,
+            immutable_ids: immutable_ids,
+            config: Config::default(),
+        })
     }
 
     // Compaction: Populate tempfile and tempmap. Only requires immutable ref to self
@@ -279,6 +285,7 @@ fn load(path: &Path) -> Result<(HashMap<String, FilePointer>, HashSet<PathBuf>, 
         let mut offset = 0u64;
         while let Some(res) = stream.next() {
             let cmd: Command = res?;
+            println!("{:?}", cmd);
             match cmd.cmd {
                 CommandType::Set => {
                     map.insert(

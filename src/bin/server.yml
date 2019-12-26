@@ -1,0 +1,20 @@
+name: kvs-server
+version: "0.1.0"
+author: triplewy <triplewy@gmail.com>
+about: Server for KvStore
+args:
+  - addr:
+      help: an IP address, either v4 or v6, and a port number, with the format IP:PORT
+      short: addr
+      long: addr
+      value_name: IP-PORT
+      takes_value: true
+  - engine:
+      help: engine for KvsStore db
+      short: engine
+      long: engine
+      value_name: ENGINE-NAME
+      takes_value: true
+      possible_values:
+        - kvs
+        - sled

@@ -13,10 +13,16 @@ failure_derive = "0.1.6"
 serde = "1.0.104"
 serde_json = "1.0.44"
 tempfile = "3.1.0"
+sled = "0.30.1"
+slog = "2.5.2"
+slog-term = "2.4.2"
+slog-async = "2.3.0"
 
 [dev-dependencies]
-assert_cmd = "0.11.0"
+assert_cmd = "0.11"
+criterion = "0.3.0"
 predicates = "1.0.0"
+rand = "0.6.5"
 tempfile = "3.0.7"
 walkdir = "2.2.7"
 
@@ -24,7 +30,18 @@ walkdir = "2.2.7"
 test = false
 
 [[bin]]
-name = "kvs"
-path = "src/bin/kvs.rs"
+name = "kvs-server"
+path = "src/bin/server.rs"
 test = false
 doctest = false
+
+[[bin]]
+name = "kvs-client"
+path = "src/bin/client.rs"
+test = false
+doctest = false
+
+[[bench]]
+name = "bench"
+path = "benches/benches.rs"
+harness = false

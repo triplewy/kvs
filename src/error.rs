@@ -21,9 +21,33 @@ pub enum KvStoreError {
         /// parseInt error
         error: std::num::ParseIntError,
     },
+    /// Utf8Error occurs when converting bytes to string
+    #[fail(display = "UTF8Error: {}", error)]
+    Utf8Error {
+        /// utf8 error
+        error: std::str::Utf8Error,
+    },
+    /// SledError occurs when interacting with Sled embedded db
+    #[fail(display = "SledError: {}", error)]
+    SledError {
+        /// sled error
+        error: sled::Error,
+    },
+    /// AddrParseError occurs when parsing a string to IpAddr
+    #[fail(display = "AddrParseErrror: {}", error)]
+    AddrParseError {
+        /// addr parse error
+        error: std::net::AddrParseError,
+    },
     /// KeyNotFoundError occurs when a key is not found in KvStore index
     #[fail(display = "Key not found")]
     KeyNotFoundError {},
+    /// ServerError is error from server in response to client request
+    #[fail(display = "ServerError: {}", error)]
+    ServerError {
+        /// server error
+        error: String,
+    },
 }
 
 impl From<serde_json::Error> for KvStoreError {
@@ -41,5 +65,23 @@ impl From<std::io::Error> for KvStoreError {
 impl From<std::num::ParseIntError> for KvStoreError {
     fn from(error: std::num::ParseIntError) -> Self {
         KvStoreError::ParseIntError { error }
+    }
+}
+
+impl From<std::str::Utf8Error> for KvStoreError {
+    fn from(error: std::str::Utf8Error) -> Self {
+        KvStoreError::Utf8Error { error }
+    }
+}
+
+impl From<sled::Error> for KvStoreError {
+    fn from(error: sled::Error) -> Self {
+        KvStoreError::SledError { error }
+    }
+}
+
+impl From<std::net::AddrParseError> for KvStoreError {
+    fn from(error: std::net::AddrParseError) -> Self {
+        KvStoreError::AddrParseError { error }
     }
 }

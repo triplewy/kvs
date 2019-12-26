@@ -1,7 +1,15 @@
-name: kvs
+name: kvs-client
 version: "0.1.0"
 author: triplewy <triplewy@gmail.com>
-about: CLI for KvStore
+about: Client for KvStore
+args:
+    - addr:
+        help: an IP address, either v4 or v6, and a port number, with the format IP:PORT
+        short: addr
+        long: addr
+        global: true
+        value_name: IP-PORT
+        takes_value: true
 subcommands:
     - get:
         about: get a kv pair
@@ -12,6 +20,10 @@ subcommands:
                 help: Search for key
                 required: true
                 index: 1
+            # - addr:
+            #     help: an IP address, either v4 or v6, and a port number, with the format IP:PORT
+            #     value_name: IP-PORT
+            #     takes_value: true
     - set:
         about: set a kv pair
         version: "1.0"
@@ -34,3 +46,7 @@ subcommands:
                 help: Search for key
                 required: true
                 index: 1
+            # - addr:
+            #     help: an IP address, either v4 or v6, and a port number, with the format IP:PORT
+            #     value_name: IP-PORT
+            #     takes_value: true
