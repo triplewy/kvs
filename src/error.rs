@@ -48,6 +48,12 @@ pub enum KvStoreError {
         /// server error
         error: String,
     },
+    /// RayonError is error from rayon lib
+    #[fail(display = "RayonError: {}", error)]
+    RayonError {
+        /// rayon error
+        error: rayon_core::ThreadPoolBuildError,
+    },
 }
 
 impl From<serde_json::Error> for KvStoreError {
@@ -83,5 +89,11 @@ impl From<sled::Error> for KvStoreError {
 impl From<std::net::AddrParseError> for KvStoreError {
     fn from(error: std::net::AddrParseError) -> Self {
         KvStoreError::AddrParseError { error }
+    }
+}
+
+impl From<rayon_core::ThreadPoolBuildError> for KvStoreError {
+    fn from(error: rayon_core::ThreadPoolBuildError) -> Self {
+        KvStoreError::RayonError { error }
     }
 }

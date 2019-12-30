@@ -1,4 +1,5 @@
 /// Config has options for the KvStore
+#[derive(Clone)]
 pub struct Config {
     /// filesize_limit denotes the size at which a file will be set to immutable
     pub filesize_limit: u64,

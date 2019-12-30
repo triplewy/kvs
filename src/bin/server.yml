@@ -18,3 +18,18 @@ args:
       possible_values:
         - kvs
         - sled
+  - threads:
+      help: num threads to use in thread pool
+      short: threads
+      long: threads
+      value_name: NUM-THREADS
+      takes_value: true
+  - pool:
+      help: type of thread pool to use
+      short: pool
+      long: pool
+      value_name: POOL-NAME
+      takes_value: true
+      possible_values:
+        - crossbeam
+        - rayon

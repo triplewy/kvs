@@ -3,8 +3,8 @@ extern crate clap;
 
 use clap::App;
 use kvs::{KvsClient, Result};
+use std::env;
 use std::net::{IpAddr, Ipv4Addr, SocketAddr};
-use std::{env, process};
 
 fn main() -> Result<()> {
     let yaml = load_yaml!("client.yml");

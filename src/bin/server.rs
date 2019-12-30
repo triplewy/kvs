@@ -2,7 +2,9 @@
 extern crate clap;
 
 use clap::App;
+use kvs::thread_pool::*;
 use kvs::{KvStore, KvsEngine, KvsServer, Result, SledKvsEngine};
+use num_cpus;
 use std::net::{IpAddr, Ipv4Addr, SocketAddr};
 use std::{env, fs, process};
 
@@ -50,16 +52,66 @@ fn main() -> Result<()> {
         .create(true)
         .open(path.join(engine))?;
 
-    match engine {
-        "kvs" => run(socket, KvStore::open(&curr_dir)?, &engine)?,
-        "sled" => run(socket, SledKvsEngine::open(&curr_dir)?, &engine)?,
-        _ => unreachable!(),
+    let num_threads = match matches.value_of("threads") {
+        Some(v) => v.parse::<u32>()?,
+        None => num_cpus::get() as u32,
     };
+    println!("num_threads: {}", num_threads);
+
+    let pool = match matches.value_of("pool") {
+        Some(v) => v,
+        None => "crossbeam",
+    };
+
+    if pool == "crossbeam" {
+        if engine == "kvs" {
+            run(
+                socket,
+                &engine,
+                KvStore::open(&curr_dir)?,
+                SharedQueueThreadPool::new(num_threads)?,
+            )?;
+        } else if engine == "sled" {
+            run(
+                socket,
+                &engine,
+                SledKvsEngine::open(&curr_dir)?,
+                SharedQueueThreadPool::new(num_threads)?,
+            )?;
+        } else {
+            unreachable!()
+        }
+    } else if pool == "rayon" {
+        if engine == "kvs" {
+            run(
+                socket,
+                &engine,
+                KvStore::open(&curr_dir)?,
+                RayonThreadPool::new(num_threads)?,
+            )?;
+        } else if engine == "sled" {
+            run(
+                socket,
+                &engine,
+                SledKvsEngine::open(&curr_dir)?,
+                RayonThreadPool::new(num_threads)?,
+            )?;
+        } else {
+            unreachable!()
+        }
+    } else {
+        unreachable!()
+    }
 
     Ok(())
 }
 
-fn run<E: KvsEngine>(socket: SocketAddr, engine: E, engine_name: &str) -> Result<()> {
-    let mut server = KvsServer::new(socket, engine, engine_name)?;
+fn run<E: KvsEngine, P: ThreadPool>(
+    socket: SocketAddr,
+    engine_name: &str,
+    engine: E,
+    pool: P,
+) -> Result<()> {
+    let server = KvsServer::new(socket, engine_name, engine, pool)?;
     server.start()
 }

@@ -137,16 +137,12 @@ impl<'de> Deserialize<'de> for ClientRequest {
         deserializer.deserialize_struct("ClientRequest", FIELDS, ClientRequestVisitor)
     }
 }
-/// ErrorResponse is when server sends error to client
-#[derive(Serialize, Deserialize, Debug, PartialEq)]
-pub struct ErrorResponse {
-    /// error message
-    pub error: String,
-}
 
-/// ValueResponse is used to respond with OK or value
-#[derive(Serialize, Deserialize, Debug, PartialEq)]
-pub struct ValueResponse {
+/// Response is used to respond with OK or value
+#[derive(Serialize, Deserialize, Debug, PartialEq, Default)]
+pub struct Response {
     /// arbitrary string value
     pub value: String,
+    /// error message
+    pub error: String,
 }
